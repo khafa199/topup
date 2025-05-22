@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ PAYMU - <%= merchantName %> ⚡</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800&family=Inter:wght@300;400;600&display=swap');
+        :root {
+            --primary-color: #FF4500; --secondary-color: #483D8B; --accent-color: #00FFFF;
+            --bg-color: #101018; --text-color: #E0E0E0; --card-bg: #1C1C28;
+            --input-bg: #282838; --success-color: #32CD32; --error-color: #FF6347;
+            --font-main: 'Inter', sans-serif; --font-display: 'Exo 2', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color); display: flex; justify-content: center; align-items: center;
+            z-index: 9999; opacity: 1; visibility: visible;
+            transition: opacity 0.5s ease-out, visibility 0s linear 0.5s;
+        }
+        #loading-screen.loaded { opacity: 0; visibility: hidden; pointer-events: none; }
+        #loading-image-container { width: 150px; height: 150px; }
+        #loading-image-container img { width: 100%; height: 100%; object-fit: contain; animation: pulseLogo 1.5s infinite ease-in-out;}
+        @keyframes pulseLogo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+        .content-wrapper { opacity: 0; visibility: hidden; transition: opacity 0.5s ease-in 0.2s; }
+        .content-wrapper.loaded { opacity: 1; visibility: visible; }
+
+        body { font-family: var(--font-main); background: var(--bg-color); color: var(--text-color); padding: 20px; overflow-x: hidden; }
+        .main-container { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 40px); }
+        .app-card {
+            background: linear-gradient(145deg, var(--card-bg), #252535);
+            padding: 30px 35px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 15px var(--accent-color);
+            width: 100%; max-width: 480px; text-align: center;
+            border: 2px solid var(--accent-color);
+        }
+        .header-title {
+            font-family: var(--font-display); font-size: 2.6em; color: var(--accent-color);
+            text-shadow: 0 0 8px var(--accent-color), 0 0 15px var(--primary-color);
+            margin-bottom: 8px; letter-spacing: 1px;
+        }
+        .header-subtitle { font-size: 1em; color: var(--text-color); opacity:0.8; margin-bottom: 25px; font-weight: 300; }
+        .merchant-info { font-size: 0.85em; color: #ccc; margin-bottom: 20px; border-top: 1px dashed var(--secondary-color); padding-top: 15px; margin-top: 20px; text-align: left; }
+        .merchant-info p { margin-bottom: 6px; }
+        .merchant-info i { color: var(--accent-color); width: 18px; margin-right: 6px; }
+        .form-group { margin-bottom: 22px; text-align: left; position: relative; }
+        .form-group label {
+            position: absolute; left: 20px; top: -10px; background: var(--card-bg); padding: 0 8px;
+            font-weight: 600; color: var(--accent-color); font-size: 0.8em; z-index:1;
+        }
+        .form-group label i { margin-right: 5px; color: var(--primary-color); }
+        .form-group input[type="number"] {
+            width: 100%; padding: 16px 20px; background-color: var(--input-bg); border: 2px solid var(--primary-color);
+            border-radius: 10px; color: var(--text-color); font-size: 1.1em; font-family: var(--font-display);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease; outline: none;
+        }
+        .form-group input[type="number"]:focus { border-color: var(--accent-color); box-shadow: 0 0 12px var(--accent-color); }
+        .form-group input::placeholder { color: #666; font-family: var(--font-main); font-weight:300; }
+        .action-button {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: var(--bg-color); padding: 18px 25px; border: none; border-radius: 10px; cursor: pointer;
+            font-size: 1.25em; font-weight: 800; font-family: var(--font-display); width: 100%;
+            text-transform: uppercase; letter-spacing: 1.5px; transition: transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3), 0 0 10px var(--primary-color) inset; margin-top: 10px;
+        }
+        .action-button:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 25px rgba(var(--accent-color),0.5); }
+        .action-button i { margin-right: 10px; }
+        .action-button:active { transform: translateY(0px) scale(0.98); }
+        #qrisResult { margin-top: 30px; padding: 20px; background-color: rgba(0,0,0,0.3); border-radius: 15px; border: 1px dashed var(--accent-color); }
+        #qrisResult h2 { font-family: var(--font-display); color: var(--accent-color); font-size: 1.6em; margin-bottom: 15px; }
+        #qrisImage { max-width: 240px; width: 100%; height: auto; border: 4px solid var(--primary-color); border-radius: 10px; margin: 15px auto; display: block; background-color: white; box-shadow: 0 0 15px var(--primary-color); }
+        #paymentAmountInfo { font-size: 1.1em; font-weight: 600; color: var(--text-color); }
+        #paymentAmountInfo span { color: var(--accent-color); font-family: var(--font-display); font-size: 1.2em; }
+        #qrisPayload { font-size: 0.65em; word-wrap: break-word; color: #aaa; margin-top: 12px; max-height: 45px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.4); border-radius: 5px; }
+        #messageArea { padding: 10px 15px; border-radius: 8px; margin-bottom: 18px; font-weight: 600; font-size: 0.9em; display: none; text-align:center; }
+        #messageArea.error { background-color: var(--error-color); color: var(--bg-color); border: 1px solid var(--error-color); }
+        #messageArea.success { background-color: var(--success-color); color: var(--bg-color); border: 1px solid var(--success-color); }
+        .loading-spinner { border: 4px solid var(--input-bg); border-top: 4px solid var(--accent-color); border-radius: 50%; width: 30px; height: 30px; animation: spin 0.8s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="loading-screen">
+        <div id="loading-image-container">
+            <img src="https://files.catbox.moe/apr5m6.png" alt="Loading...">
+        </div>
+    </div>
+    <div class="content-wrapper">
+        <div class="main-container">
+            <div class="app-card">
+                <h1 class="header-title"><i class="fas fa-bolt-lightning"></i> PAYMU WANZOFC</h1>
+                <p class="header-subtitle">pembayaran cepat & aman</p>
+                <div class="merchant-info">
+                    <p><i class="fas fa-store"></i> merchant: <%= merchantName %></p>
+                    <p><i class="fas fa-map-marker-alt"></i> Lokasi: <%= merchantCity %></p>
+                    <p><i class="fas fa-user-shield"></i> NMID: <%= defaultNmid %></p>
+                </div>
+                <div id="messageArea" 
+                     class="<% if (typeof initialMessage !== 'undefined' && initialMessage) { %><%= (typeof isError !== 'undefined' && isError) ? 'error' : 'success' %><% } else { %>hidden<% } %>">
+                    <% if (typeof initialMessage !== 'undefined' && initialMessage) { %>
+                        <%= initialMessage %>
+                    <% } %>
+                </div>
+                <div class="form-group">
+                    <label for="amount"><i class="fas fa-dollar-sign"></i> jumlah bayar (IDR)</label>
+                    <input type="number" id="amount" name="amount" placeholder="e.g. 10000" required value="<%= prefillAmount %>">
+                </div>
+                <input type="hidden" id="nmidForAction" value="<%= prefillNmidForAction %>">
+                <button class="action-button" onclick="createPayment()" id="generateBtn">
+                    <i class="fas fa-qrcode"></i> create pay
+                </button>
+                <div class="loading-spinner" id="loadingSpinner"></div>
+                <div id="qrisResult" class="hidden">
+                    <h2><i class="fas fa-barcode"></i> scan untuk membayar</h2>
+                    <img id="qrisImage" src="" alt="Kode QRIS Pembayaran">
+                    <p id="paymentAmountInfo">total: Rp <span id="paymentAmount"></span></p>
+                    <p id="qrisPayloadTitle" class="hidden" style="margin-top:10px; font-size:0.7em; font-weight: bold; color: var(--secondary-color);">payload string:</p>
+                    <div id="qrisPayload" class="hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const amountInput = document.getElementById('amount');
+        const nmidForActionInput = document.getElementById('nmidForAction');
+        const qrisResultDiv = document.getElementById('qrisResult');
+        const qrisImage = document.getElementById('qrisImage');
+        const paymentAmountSpan = document.getElementById('paymentAmount');
+        const qrisPayloadDiv = document.getElementById('qrisPayload');
+        const qrisPayloadTitle = document.getElementById('qrisPayloadTitle');
+        const messageArea = document.getElementById('messageArea');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const generateBtn = document.getElementById('generateBtn');
+        const loadingScreen = document.getElementById('loading-screen');
+        const contentWrapper = document.querySelector('.content-wrapper');
+
+        function showAppMessage(message, isError = true) {
+            messageArea.textContent = message;
+            messageArea.className = ''; 
+            messageArea.classList.add(isError ? 'error' : 'success');
+            messageArea.style.display = 'block';
+        }
+        function hideAppMessage() {
+            messageArea.style.display = 'none';
+            messageArea.textContent = '';
+        }
+        function toggleLoading(isLoading) {
+            loadingSpinner.style.display = isLoading ? 'block' : 'none';
+            generateBtn.style.display = isLoading ? 'none' : 'block';
+            if(isLoading) qrisResultDiv.classList.add('hidden');
+        }
+
+        async function createPayment() {
+            hideAppMessage();
+            const amount = amountInput.value;
+            const nmid = nmidForActionInput.value;
+            if (!amount || parseFloat(amount) <= 0) {
+                showAppMessage('Jumlah pembayaran harus valid.');
+                amountInput.focus(); return;
+            }
+            if (!nmid) {
+                showAppMessage('Konfigurasi NMID Merchant tidak ditemukan.'); return;
+            }
+            toggleLoading(true);
+            let url = `/orderkuota/createpayment?amount=${encodeURIComponent(amount)}&nmid=${encodeURIComponent(nmid)}`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                toggleLoading(false);
+                if (result.status) {
+                    qrisImage.src = result.data.qrCodeImageDataUrl;
+                    paymentAmountSpan.textContent = parseFloat(result.data.amount).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                    qrisPayloadDiv.textContent = result.data.qrisPayloadString;
+                    qrisPayloadDiv.classList.remove('hidden');
+                    qrisPayloadTitle.classList.remove('hidden');
+                    qrisResultDiv.classList.remove('hidden');
+                    showAppMessage('QRIS berhasil dibuat! Silakan scan.', false);
+                    setTimeout(() => { qrisResultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+                } else {
+                    const errorMsg = `Error: ${result.error || 'Gagal membuat QRIS.'} ${result.details ? '('+result.details+')' : ''}`;
+                    showAppMessage(errorMsg);
+                }
+            } catch (error) {
+                toggleLoading(false);
+                showAppMessage('Terjadi kesalahan koneksi atau respons server tidak valid. Coba lagi nanti.');
+                console.error("Fetch/JSON Parse Error:", error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadingScreen.classList.add('loaded');
+            contentWrapper.classList.add('loaded');
+            
+            const initialMsgText = "<%= (typeof initialMessage !== 'undefined' && initialMessage) ? initialMessage : '' %>";
+            const isInitialError = <%= (typeof isError !== 'undefined' && isError) ? 'true' : 'false' %>;
+
+            if (initialMsgText) {
+                 messageArea.textContent = initialMsgText;
+                 messageArea.className = ''; 
+                 messageArea.classList.add(isInitialError ? 'error' : 'success');
+                 messageArea.style.display = 'block';
+            } else {
+                 messageArea.style.display = 'none';
+            }
+
+            const autoSubmitFlag = <%= autoSubmit %>;
+            const prefillAmountValue = "<%= prefillAmount %>";
+            const noInitialErrorFromServer = !initialMsgText;
+
+            if (autoSubmitFlag && prefillAmountValue && parseFloat(prefillAmountValue) > 0 && noInitialErrorFromServer) {
+                createPayment();
+            }
+        });
+    </script>
+</body>
+</html>
